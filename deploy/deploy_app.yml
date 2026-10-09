@@ -123,25 +123,51 @@
       become_user: "{{ app_user }}"
       tags: app
 
-    - name: Désactiver DEBUG en production
-      ansible.builtin.lineinfile:
-        path: "{{ app_dir }}/todo/settings.py"
-        regexp: '^DEBUG\s*='
-        line: "DEBUG = False"
-      when: app_env == 'production'
-      become: true
-      become_user: "{{ app_user }}"
-      notify: Restart todolist
+    # Ex 14 (J2) : secrets hors du code, injectés par variables d'environnement
+    - name: Dossier des secrets de l'application
+      ansible.builtin.file:
+        path: /etc/todolist
+        state: directory
+        owner: root
+        group: "{{ app_user }}"
+        mode: "0750"
       tags: app
 
-    - name: Restreindre ALLOWED_HOSTS en production
-      ansible.builtin.lineinfile:
-        path: "{{ app_dir }}/todo/settings.py"
-        regexp: '^ALLOWED_HOSTS\s*='
-        line: "ALLOWED_HOSTS = ['{{ ansible_host }}']"
-      when: app_env == 'production'
-      become: true
-      become_user: "{{ app_user }}"
+    - name: Générer la SECRET_KEY Django sur le serveur (une seule fois)
+      ansible.builtin.shell: >-
+        umask 027 && python3 -c 'import secrets; print(secrets.token_urlsafe(50))' > /etc/todolist/secret_key
+      args:
+        creates: /etc/todolist/secret_key
+      no_log: true
+      tags: app
+
+    - name: Générer le mot de passe admin sur le serveur si Jenkins n'en fournit pas
+      ansible.builtin.shell: >-
+        umask 027 && python3 -c 'import secrets; print(secrets.token_urlsafe(24))' > /etc/todolist/admin_password
+      args:
+        creates: /etc/todolist/admin_password
+      no_log: true
+      tags: app
+
+    - name: Lire les secrets générés
+      ansible.builtin.slurp:
+        src: "/etc/todolist/{{ item }}"
+      loop: [secret_key, admin_password]
+      register: app_secrets
+      no_log: true
+      tags: app
+
+    - name: Fichier d'environnement de l'application (lisible par root et todolist uniquement)
+      ansible.builtin.template:
+        src: templates/todolist.env.j2
+        dest: /etc/todolist/todolist.env
+        owner: root
+        group: "{{ app_user }}"
+        mode: "0640"
+      vars:
+        django_secret_key: "{{ app_secrets.results[0].content | b64decode | trim }}"
+        admin_password: "{{ lookup('ansible.builtin.env', 'TODOLIST_ADMIN_PASSWORD') | default(app_secrets.results[1].content | b64decode | trim, true) }}"
+      no_log: true
       notify: Restart todolist
       tags: app
 

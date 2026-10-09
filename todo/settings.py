@@ -10,7 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from django.core.management.utils import get_random_secret_key
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -19,17 +22,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-# TODO: ne jamais commiter la cle secrete, la charger depuis une variable d'environnement
-# FIXME: cle secrete Django exposee dans le depot Git
-SECRET_KEY = 'django-insecure-=8e&h2naz6*na6mne4y8l1m@rr=(igde^7rz2cmal)r_o)raoo'
+# Secrets et paramètres sensibles injectés par variables d'environnement
+# (fichier /etc/todolist/todolist.env déployé par Ansible, jamais dans Git).
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY") or get_random_secret_key()
 
-# SECURITY WARNING: don't run with debug turned on in production!
-# TODO: desactiver le mode DEBUG avant la mise en production
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "False") == "True"
 
-# TODO: restreindre les hotes autorises, '*' accepte n'importe quel hote
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [h for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h]
 
 
 # Application definition

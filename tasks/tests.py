@@ -95,3 +95,56 @@ class TaskViewsTest(TestCase):
 
         self.assertEqual(Task.objects.count(), 0)
         self.assertRedirects(response, "/")
+
+
+class TaskErrorHandlingTest(TestCase):
+    """Cas d'erreur et sécurité des vues"""
+
+    def test_update_unknown_task_returns_404(self):
+        response = self.client.get("/update_task/9999/")
+        self.assertEqual(response.status_code, 404)
+
+    def test_delete_unknown_task_returns_404(self):
+        response = self.client.post("/delete_task/9999/")
+        self.assertEqual(response.status_code, 404)
+
+    def test_create_task_invalid_form_stays_on_page(self):
+        response = self.client.post("/", {"title": ""})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(Task.objects.count(), 0)
+
+    def test_title_is_html_escaped(self):
+        Task.objects.create(title="<script>alert(1)</script>")
+        response = self.client.get("/")
+        self.assertNotContains(response, "<script>alert(1)</script>")
+        self.assertContains(response, "&lt;script&gt;")
+
+    def test_method_not_allowed(self):
+        response = self.client.put("/")
+        self.assertEqual(response.status_code, 405)
+
+
+class AdminPanelTest(TestCase):
+    """Le mot de passe admin vient de l'environnement, jamais du code"""
+
+    def test_admin_panel_refuses_without_configured_password(self):
+        with self.settings():
+            import os
+            os.environ.pop("TODOLIST_ADMIN_PASSWORD", None)
+            response = self.client.post("/admin_panel/", {"pwd": "nimporte"})
+        self.assertEqual(response.status_code, 403)
+
+    def test_admin_panel_accepts_env_password(self):
+        import os
+        os.environ["TODOLIST_ADMIN_PASSWORD"] = "mot-de-passe-de-test"
+        try:
+            ok = self.client.post("/admin_panel/", {"pwd": "mot-de-passe-de-test"})
+            ko = self.client.post("/admin_panel/", {"pwd": "faux"})
+        finally:
+            os.environ.pop("TODOLIST_ADMIN_PASSWORD", None)
+        self.assertEqual(ok.status_code, 200)
+        self.assertEqual(ko.status_code, 403)
+
+    def test_admin_panel_get_not_allowed(self):
+        response = self.client.get("/admin_panel/")
+        self.assertEqual(response.status_code, 405)
