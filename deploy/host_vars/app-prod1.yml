@@ -1,0 +1,2 @@
+app_env: production
+ufw_allowed_ports: ["22", "80"]

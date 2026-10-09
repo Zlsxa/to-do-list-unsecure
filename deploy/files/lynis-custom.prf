@@ -1,0 +1,3 @@
+# Exception justifiée : kernel.modules_disabled=1 empêcherait UFW/fail2ban
+# de charger les modules netfilter dont ils ont besoin après le démarrage.
+skip-test=KRNL-6000:kernel.modules_disabled

@@ -1,0 +1,18 @@
+# {{ ansible_managed }}
+# Chargé avant /etc/ssh/sshd_config (la 1re valeur lue l'emporte)
+PermitRootLogin no
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PermitEmptyPasswords no
+PubkeyAuthentication yes
+AuthenticationMethods publickey
+AllowUsers {{ ssh_allowed_users | join(' ') }}
+MaxAuthTries 3
+LoginGraceTime 30
+ClientAliveInterval 300
+ClientAliveCountMax 2
+X11Forwarding no
+AllowAgentForwarding no
+AllowTcpForwarding no
+LogLevel VERBOSE
+Banner /etc/issue.net

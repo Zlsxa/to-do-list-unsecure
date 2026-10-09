@@ -1,0 +1,7 @@
+admin_user: admin
+admin_pubkey: "{{ lookup('ansible.builtin.file', playbook_dir + '/id-rda-infra.key.pub') }}"
+ssh_allowed_users:
+  - admin
+  - vagrant
+ufw_allowed_ports:
+  - "22"

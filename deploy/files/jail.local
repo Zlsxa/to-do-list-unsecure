@@ -1,0 +1,9 @@
+# Géré par Ansible (Lynis DEB-0880)
+[DEFAULT]
+bantime  = 1h
+findtime = 10m
+maxretry = 3
+backend  = systemd
+
+[sshd]
+enabled = true

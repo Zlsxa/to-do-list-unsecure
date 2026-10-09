@@ -1,0 +1,30 @@
+- name: Installer Lynis
+  ansible.builtin.apt:
+    name: lynis
+    state: present
+  tags: audit
+
+- name: Exceptions Lynis justifiées
+  ansible.builtin.copy:
+    src: files/lynis-custom.prf
+    dest: /etc/lynis/custom.prf
+    owner: root
+    group: root
+    mode: "0644"
+  tags: audit
+
+- name: Lancer l'audit Lynis
+  ansible.builtin.command: lynis audit system --quick --no-colors
+  changed_when: false
+  tags: audit
+
+- name: Lire le hardening index
+  ansible.builtin.command: grep -oP '^hardening_index=\K[0-9]+' /var/log/lynis-report.dat
+  register: lynis_index
+  changed_when: false
+  tags: audit
+
+- name: Afficher le score
+  ansible.builtin.debug:
+    msg: "{{ inventory_hostname }} : hardening index Lynis = {{ lynis_index.stdout }}"
+  tags: audit
