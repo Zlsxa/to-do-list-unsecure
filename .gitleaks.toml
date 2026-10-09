@@ -1,0 +1,20 @@
+title = "gitleaks todolist"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "django-secret-key"
+description = "SECRET_KEY Django en dur"
+regex = '''SECRET_KEY\s*=\s*['"]([^'"\s]{20,})['"]'''
+keywords = ["secret_key"]
+
+[[rules]]
+id = "hardcoded-password"
+description = "Mot de passe en dur dans le code"
+regex = '''(?i)(password|passwd|pwd)\s*=\s*['"]([^'"]{6,})['"]'''
+keywords = ["password", "passwd", "pwd"]
+
+[allowlist]
+description = "Faux positifs connus"
+paths = ['''tasks/tests\.py''', '''\.gitleaks\.toml''']
