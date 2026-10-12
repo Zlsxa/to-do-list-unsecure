@@ -50,8 +50,8 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    # TODO: XFrameOptionsMiddleware retire => clickjacking possible (S5146)
-    # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'tasks.security_headers.SecurityHeadersMiddleware',
 ]
 
 ROOT_URLCONF = 'todo.urls'
@@ -128,7 +128,8 @@ USE_TZ = True
 SESSION_COOKIE_SECURE = False
 CSRF_COOKIE_SECURE = False
 # TODO: HttpOnly=False expose le cookie de session au JavaScript (vol de session via XSS)
-SESSION_COOKIE_HTTPONLY = False
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = True
 
 STATIC_URL = '/static/'
 
@@ -136,3 +137,6 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+X_FRAME_OPTIONS = "DENY"
+SECURE_CONTENT_TYPE_NOSNIFF = True
